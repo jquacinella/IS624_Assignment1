@@ -1,0 +1,19 @@
+---
+title: "IS624 - Assignment 1"
+author: "James Quacinella"
+date: "06/13/2015"
+output: html_document
+---
+
+
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
