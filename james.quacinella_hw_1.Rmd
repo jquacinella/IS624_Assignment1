@@ -43,13 +43,11 @@ plot(BoxCox(dole, lambda.dole), main="Monthly total of people on unemployed bene
 
 ## Question 2.1b)
 
-The following code produces two graphs of the pre and post transformation of the monthly total of accidental deaths in the United States. TODO
+The following code produces two graphs of the pre and post transformation of the monthly total of accidental deaths in the United States. The lambda value is small, but since the plot shows seasonality, I think this transformation
+is useful. Also, the scale post-transformaion is a lot smaller, which is sometimes helpful in machine learning / predicitive tasks.
 
 ```{r fig.show='hold'}
 #' Monthly total of accidental deaths in the United States (January 1973–December 1978).
-#' The lambda value is small, but since the plot shows seasonality, I think this transformation
-#' ise useful. Also, the scale post-transformaion is a lot smaller, which is sometimes helpful
-#' in machine learning / predicitive tasks
 lambda.usdeaths <- BoxCox.lambda(usdeaths)  # -0.03363775
 plot(usdeaths, main="Monthly total of accidental deaths in the United States", sub="Pre-Transformation")
 plot(BoxCox(usdeaths, lambda.usdeaths), main="Monthly total of accidental deaths in the United States", sub="Post-Transformation")
@@ -59,7 +57,7 @@ plot(BoxCox(usdeaths, lambda.usdeaths), main="Monthly total of accidental deaths
 
 ## Question 2.1c)
 
-The following code produces two graphs of the pre and post transformation of the Quarterly production of bricks. TODO
+The following code produces two graphs of the pre and post transformation of the Quarterly production of bricks. The shape of rhe data does not change signicificantly, but like part b), the y-scale is smaller.
 
 ```{r fig.show='hold'}
 #' Quarterly production of bricks (in millions of units) at Portland, Australia (March 1956–September 1994). 
@@ -74,7 +72,7 @@ plot(BoxCox(bricksq, lambda.bricksq), main="Quarterly production of bricks", sub
 
 ## Question 2.3a)
 
-To become familiar with the ibmclose data set, here we plot the time series with some running averages. The big dip in price is going to give us trouble with our simplistic forcasting.
+To become familiar with the ibmclose data set, here we plot the time series with some running averages. The big dip in price is going to give us trouble with our simplistic forcasting. The data is not in the right format for doing seasonal or month graphs (see next question).
 
 ```{r}
 #' Produce some plots of the data in order to become familiar with it.
@@ -163,7 +161,7 @@ hsales.test <- window(hsales, start=c(1994, 1), end=c(1995, 11))
 ## Question 2.4c)
 
 Visual inspection shows that the seasonal naive method looks pretty accurate across the 23months of prediction, though the predicted value in 23months looks pretty off. None of the methods seem to predict the end drop-off in value towards
-the end of 1995. TODO
+the end of 1995. 
 
 ```{r fig.show='hold'}
 hsales.prediction_horizon <- 23;
@@ -269,7 +267,7 @@ For each predictor that has a high number of NAs (starting from the left in the 
 
 ## Question 4.4a)
 
-TODO
+Th code below generates random samples of size 60 from oilType. The output shows how inconsistent the samples are with respect to the class frequencies, and vary far from the distribution from the full data.
 
 ```{r results='hold'}
 #' (a) Use the sample function in base R to create a completely random sample

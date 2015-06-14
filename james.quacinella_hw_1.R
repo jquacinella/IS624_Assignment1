@@ -204,7 +204,6 @@ question_3.2a <- function() {
 #' Also, the columns herbicide-injury, cyst-nematode, 2-4-d-injury, diaporthe-pod-&-stem-blight
 #' have no instances / rows that do not have a NA in them. The class phytophthora-rot has 68 NAs, 
 #' but all other classes have complete cases
-
 question_3.2b <- function() {
   i <- 1;
   nas <- c()
@@ -313,17 +312,22 @@ question_4.4b <- function() {
 
 
 #' (d) Snip...
-#' NOTES: In this case, the width of the 95 % confidence interval is 37.9 %. Try
+#' In this case, the width of the 95 % confidence interval is 37.9 %. Try
 #' different samples sizes and accuracy rates to understand the trade-off
 #' between the uncertainty in the results, the model performance, and the
 #' test set size.
 #' 
-#' By keeping the model performance steady, while changing the test sample size leads to a relationship where higher sample size means less uncertainity. This makes sense: we would expect us to be more certain if we have more samples to evaluate the model performance with.
+#' NOTES: By keeping the model performance steady, while changing the test 
+#' sample size leads to a relationship where higher sample size means less 
+#' uncertainity. This makes sense: we would expect us to be more certain 
+#' if we have more samples to evaluate the model performance with.
 #' 
-#' If you keep the sample size steady, and vary the model performance leads to a relationship where:
-#'   - the uncertainity maxes when performance is 50% (which makes sense since its binomial probability).
-#' - the uncertainity is less when model performace is near either extreme (partially due to clipping of the CI by the boundry)
-
+#' If you keep the sample size steady, and vary the model performance leads 
+#' to a relationship where:
+#'   - the uncertainity maxes when performance is 50% (which makes sense 
+#'      since its binomial probability).
+#'   - the uncertainity is less when model performace is near either extreme 
+#'      (partially due to clipping of the CI by the boundry)
 function question_4.4d <- function() {
   spread <- function(obj) { conf <- obj$conf.int; return(conf[2] - conf[1]);}
   spread(binom.test(16, 20)) # 0.37928
