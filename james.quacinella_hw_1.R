@@ -1,21 +1,25 @@
 #' Name: James Quacinella
 
-#' Forecasting results are relatively insensitive to the value of λ.
-#' Often no transformation is needed.
-#' Transformations sometimes make little difference to the forecasts but have a large effect on prediction intervals.
- 
 #' Plot the Monthly total of people on unemployed benefits in Australia (January 1956–July 1992).  
+#' 
+#' NOTES: The following code produces two graphs of the pre and post transformation of the monthly 
+#' total of people on unemployed benefits in Australia. The data looks skewed to me, and by 
+#' recommendation of the first textbook, I would apply this transformation. Note that the 
+#' y-scale is a lot smaller with the transform, which is true across all problems in
+#' this question.
 question_2.1a <- function() {
   library("fma")
-  lambda.dole <- BoxCox.lambda(dole)  # -0.03363775
+  lambda.dole <- BoxCox.lambda(dole)  # 0.3290922
   plot(dole, main="Monthly total of people on unemployed benefits in Australia", sub="Pre-Transformation")
-  plot(BoxCox(dole, lambda.dole), main="Monthly total of people on unemployed benefits in Australia", sub="Post-Transformation")
+  plot(BoxCox(dole, lambda.dole), sub="Post-Transformation")
 }
 
 #' Monthly total of accidental deaths in the United States (January 1973–December 1978).
-#' The lambda value is small, but since the plot shows seasonality, I think this transformation
-#' ise useful. Also, the scale post-transformaion is a lot smaller, which is sometimes helpful
-#' in machine learning / predicitive tasks
+#' 
+#' NOTES: The lambda value is small, and according to the text, since the seasonality already looks
+#' to be the same across the data, this transformation is probably not needed ("A good value oflambda 
+#' is one which makes the size of the seasonal variation about the same across the whole series").
+#' I have plotted both either way.
 question_2.1b <- function() {
   lambda.usdeaths <- BoxCox.lambda(usdeaths)  # -0.03363775
   plot(usdeaths, main="Monthly total of accidental deaths in the United States", sub="Pre-Transformation")
@@ -24,10 +28,12 @@ question_2.1b <- function() {
 
 #' Quarterly production of bricks (in millions of units) at Portland, Australia (March 1956–September 1994). 
 #' 
+#' NOTES: The following code produces two graphs of the pre and post transformation of the Quarterly production 
+#' of bricks. The shape of rhe data does not change signicificantly, but like part b), the y-scale is smaller.
 question_2.1c <- function() {
   lambda.bricksq <- BoxCox.lambda(bricksq)  # 0.2548929
   plot(bricksq, main="Quarterly production of bricks", sub="Pre-transformation")
-  plot(BoxCox(bricksq, lambda.bricksq), main="Quarterly production of bricks", sub="Post-transformation")
+  plot(BoxCox(bricksq, lambda.bricksq), sub="Post-transformation")
 }
 
 
@@ -51,10 +57,23 @@ question_2.3b <- function() {
 #' Try various benchmark methods to forecast the training set and compare the results on the test set. 
 #' Which method did best? 
 #' 
-#' Comments: Note that the blue prediction is for the mean predicition, and looks different due to using 
+#' NOTES: Note that the blue prediction is for the mean predicition, and looks different due to using 
 #' plot() versus lines(). Also note that both naive methods overlap their predicitions. 
-#' Visually inspecting the predictions, drift is clearly the most accurate; the mean is so far away as it does
-#' not account well for the bug dip in value around t=250.
+#' Visually inspecting the predictions, drift seems to ve the most accurate; the mean is so far away 
+#' as it does not account well for the bug dip in value around t=250.
+#' 
+#' The various error rates are printed as well for each prediction scheme.  
+#' Results for mean, naive, seasonal naive and drift, respectively:
+#'
+#'                         ME      RMSE       MAE        MPE     MAPE     MASE      ACF1 Theil's U
+#' Test set     -1.306180e+02 132.12557 130.61797 -35.478819 35.47882 25.62649 0.9314689  19.05515
+#' Test set     -3.7246377    20.248099 17.02899 -1.29391743 4.668186 3.340989 0.9314689  2.973486
+#' Test set     -3.7246377    20.248099 17.02899 -1.29391743 4.668186 3.340989 0.9314689  2.973486
+#' Test set     6.108138e+00  17.066963 13.974747  1.41920066 3.707888 2.741765 0.9045875  2.361092
+#' 
+#' Its clear that the mean error is too high compared to the rest. It seems that drift overall tends
+#' to have lower error values that the naive methods, but are generally pretty close. As said above,
+#' I think my tendency would be for the drift method.
 question_2.3c <- function() {
   ibmclose.prediction_horizon <- length(ibmclose) - 300;
   
@@ -74,10 +93,10 @@ question_2.3c <- function() {
   legend("topright", lty=1, col=c(4,2,3,1), legend=c("Mean method","Naive method","Seasonal naive method", "Drift"))
   
   # Look at error values from our predictions
-  accuracy(ibmclose.fit.mean, ibmclose)
-  accuracy(ibmclose.fit.naive, ibmclose)
-  accuracy(ibmclose.fit.seasonalNaive, ibmclose)
-  accuracy(ibmclose.fit.drift, ibmclose)
+  accuracy(ibmclose.fit.mean, ibmclose.test)
+  accuracy(ibmclose.fit.naive, ibmclose.test)
+  accuracy(ibmclose.fit.seasonalNaive, ibmclose.test)
+  accuracy(ibmclose.fit.drift, ibmclose.test)
 }
 
 
@@ -114,7 +133,17 @@ question_2.4b <- function() {
 #' Comments: Visual inspection shows that the seasonal naive method looks pretty accurate
 #' across the 23months of prediction, though the predicted value in 23months looks
 #' pretty off. None of the methods seem to predict the end drop-off in value towards
-#' the end of 1995
+#' the end of 1995. Here are the error values for the mean, naive, seasonal naive and
+#' drift methods, respectively:
+#' 
+#'                      ME      RMSE      MAE       MPE     MAPE     MASE      ACF1 Theil's U
+#' Test set     4.051587e+00  9.216133 7.850759  5.074990 13.75973 0.924979 0.5095178   1.13105
+#' Test set      5.00000000 9.670664 8.304348   6.8080182 14.381673 0.9784210 0.5095178 1.179633
+#' Test set     0.3043478   6.160886 5.0000     -0.7312374  9.12828 0.5891016 0.224307  0.8031005
+#' Test set     5.191235e+00 9.761548 8.393037  7.1599507 14.50303 0.9888703 0.5083059  1.188562
+#' 
+#' The seasonal naive is aclear winner here. Visually, the seaonal naive method overlaps the 
+#' test data very well, and generally has the least amount of error for any error metric.
 question_2.4c <- function() {
   hsales.prediction_horizon <- 23;
   
@@ -134,10 +163,10 @@ question_2.4c <- function() {
   legend("topright", lty=1, col=c(4,2,3,1), legend=c("Mean method","Naive method","Seasonal naive method", "Drift"))
 
   # Look at error values from our predictions
-  accuracy(hsales.fit.mean, hsales)
-  accuracy(hsales.fit.naive, hsales)
-  accuracy(hsales.fit.seasonalNaive, hsales)
-  accuracy(hsales.fit.drift, hsales)
+  accuracy(hsales.fit.mean, hsales.test)
+  accuracy(hsales.fit.naive, hsales.test)
+  accuracy(hsales.fit.seasonalNaive, hsales.test)
+  accuracy(hsales.fit.drift, hsales.test)
 }
 
 

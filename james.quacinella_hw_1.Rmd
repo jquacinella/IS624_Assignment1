@@ -10,9 +10,8 @@ theme: journal
 
 The official R code for this homework is located on [github.com](https://github.com/jquacinella/IS624_Assignment1/blob/master/james.quacinella_hw_1.R). All the code below is copied from the problem functions in that file.
 
-# Setup
-
 ```{r include=FALSE}
+# Setup libraries
 library(fma)
 library(mlbench)
 library(plyr)
@@ -28,42 +27,48 @@ data(oil)
 data(Soybean)
 ```
 
-# Question 2.1
-
 ## Question 2.1a)
 
-The following code produces two graphs of the pre and post transformation of the monthly total of people on unemployed benefits in Australia. TODO
+The following code produces two graphs of the pre and post transformation of the monthly total of people on unemployed benefits in Australia. The data looks skewed to me, and by recommendation of the first textbook, I would apply this
+transformation. Note that the y-scale is a lot smaller with the transform, which is true across all problems in
+this question.
 
 ```{r fig.show='hold'}
 #' Plot the Monthly total of people on unemployed benefits in Australia (January 1956–July 1992).  
-lambda.dole <- BoxCox.lambda(dole)  # -0.03363775
+lambda.dole <- BoxCox.lambda(dole)  # 0.3290922
 plot(dole, main="Monthly total of people on unemployed benefits in Australia", sub="Pre-Transformation")
-plot(BoxCox(dole, lambda.dole), main="Monthly total of people on unemployed benefits in Australia", sub="Post-Transformation")
+plot(BoxCox(dole, lambda.dole), sub="Post-Transformation")
 ```
+
+\pagebreak
 
 ## Question 2.1b)
 
-The following code produces two graphs of the pre and post transformation of the monthly total of accidental deaths in the United States. The lambda value is small, but since the plot shows seasonality, I think this transformation
-is useful. Also, the scale post-transformaion is a lot smaller, which is sometimes helpful in machine learning / predicitive tasks.
+The following code produces two graphs of the pre and post transformation of the monthly total of 
+accidental deaths in the United States. The lambda value is small, and according to the text, 
+since the seasonality already looks to be the same across the data, this transformation is 
+probably not needed ("A good value of lambda is one which makes the size of the seasonal variation 
+about the same across the whole series"). I have plotted both either way.
 
 ```{r fig.show='hold'}
 #' Monthly total of accidental deaths in the United States (January 1973–December 1978).
 lambda.usdeaths <- BoxCox.lambda(usdeaths)  # -0.03363775
 plot(usdeaths, main="Monthly total of accidental deaths in the United States", sub="Pre-Transformation")
-plot(BoxCox(usdeaths, lambda.usdeaths), main="Monthly total of accidental deaths in the United States", sub="Post-Transformation")
+plot(BoxCox(usdeaths, lambda.usdeaths), sub="Post-Transformation")
 
 ```
 
+\pagebreak
 
 ## Question 2.1c)
 
-The following code produces two graphs of the pre and post transformation of the Quarterly production of bricks. The shape of rhe data does not change signicificantly, but like part b), the y-scale is smaller.
+The following code produces two graphs of the pre and post transformation of the Quarterly production of bricks. The shape of the data does not change signicificantly, but like previous portions of the question, the y-scale is smaller.
 
 ```{r fig.show='hold'}
 #' Quarterly production of bricks (in millions of units) at Portland, Australia (March 1956–September 1994). 
 lambda.bricksq <- BoxCox.lambda(bricksq)  # 0.2548929
 plot(bricksq, main="Quarterly production of bricks", sub="Pre-transformation")
-plot(BoxCox(bricksq, lambda.bricksq), main="Quarterly production of bricks", sub="Post-transformation")
+plot(BoxCox(bricksq, lambda.bricksq), sub="Post-transformation")
 ```
 
 \pagebreak
@@ -114,14 +119,17 @@ lines(ibmclose)
 legend("bottomleft", lty=1, col=c(4,2,3,1), legend=c("Mean method","Naive method","Seasonal naive method", "Drift"))
 ```
 
-The error rates are also printed for the various prediction methods: TODO
+The various error rates are printed for mean, naive, seasonal naive and drift, respectively.
+Its clear that the mean error is too high compared to the rest. It seems that drift overall tends
+to have lower error values that the naive methods, but are generally pretty close. As said above, 
+I think my tendency would be for the drift method.
 
 ```{r results='hold'}
 # Look at error values from our predictions
-accuracy(ibmclose.fit.mean, ibmclose)
-accuracy(ibmclose.fit.naive, ibmclose)
-accuracy(ibmclose.fit.seasonalNaive, ibmclose)
-accuracy(ibmclose.fit.drift, ibmclose)
+accuracy(ibmclose.fit.mean, ibmclose.test)
+accuracy(ibmclose.fit.naive, ibmclose.test)
+accuracy(ibmclose.fit.seasonalNaive, ibmclose.test)
+accuracy(ibmclose.fit.drift, ibmclose.test)
 ```
 
 \pagebreak
@@ -182,14 +190,16 @@ lines(hsales)
 legend("topright", lty=1, col=c(4,2,3,1), legend=c("Mean method","Naive method","Seasonal naive method", "Drift"))
 ```
 
-Here we look at the error values (TODO):
+Here are the error values for the mean, naive, seasonal naive and drift methods, respectively.
+The seasonal naive is a clear winner here. Visually, the seaonal naive method overlaps the test 
+data very well, and generally has the least amount of error for any error metric.
 
 ```{r results='hold'}
 # Look at error values from our predictions
-accuracy(hsales.fit.mean, hsales)
-accuracy(hsales.fit.naive, hsales)
-accuracy(hsales.fit.seasonalNaive, hsales)
-accuracy(hsales.fit.drift, hsales)
+accuracy(hsales.fit.mean, hsales.test)
+accuracy(hsales.fit.naive, hsales.test)
+accuracy(hsales.fit.seasonalNaive, hsales.test)
+accuracy(hsales.fit.drift, hsales.test)
 ```
 
 \pagebreak
