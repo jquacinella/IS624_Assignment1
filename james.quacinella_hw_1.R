@@ -171,24 +171,31 @@ question_2.4c <- function() {
 
 
 
-
-
-#' The soybean data can also be found at the UC Irvine Machine Learning
-#' Repository. Data were collected to predict disease in 683 soybeans. The 35
-#' predictors are mostly categorical and include information on the environmental 
-#' conditions (e.g., temperature, precipitation) and plant conditions 
-#' (e.g., left spots, mold growth). The outcome labels consist of 19 distinct classes.
-#' See ?Soybean for details
-
-
-
 #' (a) Investigate the frequency distributions for the categorical predictors. Are
 #' any of the distributions degenerate in the ways discussed earlier in this
 #' chapter?
 #' 
-#' It seems that only three columns come close (but don't quite hit the threshold)
-#' to matching the rules of thumb for degenerate categorical data. Those columns are
-#' mycelium, int.discolor, and sclerotia (see output)
+#' With regards to being degenerate, I will refer to Section 3.5 about Removing Predictors,
+#' since I assume that degeneracy means 'detecting that this predictor should probably be 
+#' removed'. The rule of thumb is predictors are 'degenerate' if the frequency of the first 
+#' and second most common values for that predictor is > 20, while the fraction of unique
+#' values as compared to the number of samples is low.
+#' 
+#' First, the fraction of unique values over the sample size is low for all columns, 
+#' so we just need to check the ratio of first and second most frequent value per 
+#' predictor. However, there is some ambiguity here as to whether or not we should
+#' be including NAs as a value. I have done it both ways, since the results are a little
+#' different.
+#' 
+#' With NAs counted, the columns that are close to the 20 threshold are
+#' mycelium, int.discolor, and sclerotia. However, with NAs not counted,
+#' the columns are mycelium, scelortia amd leaf.mild.
+#' 
+#' With NAs counted, the columns that are close to the 20 threshold are mycelium, 
+#' int.discolor, and sclerotia. However, with NAs not counted, the columns are 
+#' mycelium, scelortia amd leaf.mild. My intuition says that we should not count 
+#' the NAs (since the histogram here is very clear that some columns are over the threshold)
+#' Therefore, mycelium, scelortia amd leaf.mild should be considered degenerate.
 question_3.2a <- function() {
   library(mlbench)
   data(Soybean)
@@ -196,28 +203,42 @@ question_3.2a <- function() {
   
   nrows <- nrow(Soybean);
   
-  #' Lets check our rule of thumb
-  #' NOTE: The fraction of unique values over the sample size is low for all columns
-  #' NOTE: only three columns have a ratio of the frequency of the most prevalent value to 
-  #' the frequency of the second most prevalent value close to 20. These columns are:
-  #' mycelium, scleroria and int.discolor
+  #' Lets check our rule of thumb by calculating ratio of 1st and 2nd highest freq
   i <- 1;
-  ratios <- c()
+  ratiosWithoutNAs <- c()
+  ratiosWithNAs <- c()
   for (column in colnames(Soybean)[2:length(colnames(Soybean))]) {
+    # Do the calculation using count(), which includes NAs
     t <- count(Soybean, column)
     sorted_t <- t[order(-t['freq']), 'freq']
+    ratiosWithNAs[i] <- (sorted_t[1] / sorted_t[2]);
     
-    ratios[i] <- (sorted_t[1] / sorted_t[2]);
+    # Do the claculation using table() which does not include NAs
+    t <- table(Soybean[ , column])
+    sorted_t <- sort(as.numeric(t), decreasing=TRUE)
+    ratiosWithoutNAs[i] <- (sorted_t[1] / sorted_t[2]);
+    
+    # Increment the idx for ratio lists
     i <- i + 1;
   }
   
-  library(gpglot2)
-  ratios.dist <- data.frame(y=ratios, x=colnames(Soybean)[2:length(colnames(Soybean))])
-  ratios.dist$x <-reorder(ratios.dist$x,-ratios.dist$y)
-  ggplot(ratios.dist) + 
+  # Display the histogram when accounting for NAs
+  library(ggplot2)
+  ratiosWithNAs.dist <- data.frame(y=ratiosWithNAs, x=colnames(Soybean)[2:length(colnames(Soybean))])
+  ratiosWithNAs.dist$x <-reorder(ratiosWithNAs.dist$x, -ratiosWithNAs.dist$y)
+  ggplot(ratiosWithNAs.dist) + 
     geom_bar(aes(x=x, y=y), stat="identity") + 
     theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
-    ggtitle("Distribution of the Ratios of Most Frequently Occuring to 2nd Most Frequently Occuring") + 
+    ggtitle("Distribution of the Ratios of Most Frequently Occuring to \n 2nd Most Frequently Occuring (including NAs)") + 
+    ylab("Ratio") + xlab("Column")
+  
+  # Display the histogram when not accounting for NAs
+  ratiosWithoutNAs.dist <- data.frame(y=ratiosWithoutNAs, x=colnames(Soybean)[2:length(colnames(Soybean))])
+  ratiosWithoutNAs.dist$x <-reorder(ratiosWithoutNAs.dist$x, -ratiosWithoutNAs.dist$y)
+  ggplot(ratiosWithoutNAs.dist) + 
+    geom_bar(aes(x=x, y=y), stat="identity") + 
+    theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
+    ggtitle("Distribution of the Ratios of Most Frequently Occuring to \n 2nd Most Frequently Occuring (not including NAs)") + 
     ylab("Ratio") + xlab("Column")
 }
 
