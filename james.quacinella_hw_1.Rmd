@@ -2,18 +2,340 @@
 title: "IS624 - Assignment 1"
 author: "James Quacinella"
 date: "06/13/2015"
-output: html_document
+output: pdf_document
+theme: journal
 ---
 
+# Code
 
+The official R code for this homework is located on [github.com](https://github.com/jquacinella/IS624_Assignment1/blob/master/james.quacinella_hw_1.R). All the code below is copied from the problem functions in that file.
+
+# Setup
+
+```{r include=FALSE}
+library(fma)
+library(mlbench)
+library(plyr)
+library(ggplot2)
+library(caret)
+library(descr)
+
+# Make sure we set a seed for consistent results
+set.seed(1)
+
+# Load some data
+data(oil)
+data(Soybean)
+```
+
+# Question 2.1
+
+## Question 2.1a)
+
+The following code produces two graphs of the pre and post transformation of the monthly total of people on unemployed benefits in Australia. TODO
+
+```{r fig.show='hold'}
+#' Plot the Monthly total of people on unemployed benefits in Australia (January 1956–July 1992).  
+lambda.dole <- BoxCox.lambda(dole)  # -0.03363775
+plot(dole, main="Monthly total of people on unemployed benefits in Australia", sub="Pre-Transformation")
+plot(BoxCox(dole, lambda.dole), main="Monthly total of people on unemployed benefits in Australia", sub="Post-Transformation")
+```
+
+## Question 2.1b)
+
+The following code produces two graphs of the pre and post transformation of the monthly total of accidental deaths in the United States. TODO
+
+```{r fig.show='hold'}
+#' Monthly total of accidental deaths in the United States (January 1973–December 1978).
+#' The lambda value is small, but since the plot shows seasonality, I think this transformation
+#' ise useful. Also, the scale post-transformaion is a lot smaller, which is sometimes helpful
+#' in machine learning / predicitive tasks
+lambda.usdeaths <- BoxCox.lambda(usdeaths)  # -0.03363775
+plot(usdeaths, main="Monthly total of accidental deaths in the United States", sub="Pre-Transformation")
+plot(BoxCox(usdeaths, lambda.usdeaths), main="Monthly total of accidental deaths in the United States", sub="Post-Transformation")
+
+```
+
+
+## Question 2.1c)
+
+The following code produces two graphs of the pre and post transformation of the Quarterly production of bricks. TODO
+
+```{r fig.show='hold'}
+#' Quarterly production of bricks (in millions of units) at Portland, Australia (March 1956–September 1994). 
+lambda.bricksq <- BoxCox.lambda(bricksq)  # 0.2548929
+plot(bricksq, main="Quarterly production of bricks", sub="Pre-transformation")
+plot(BoxCox(bricksq, lambda.bricksq), main="Quarterly production of bricks", sub="Post-transformation")
+```
+
+\pagebreak
+
+# Question 2.3
+
+## Question 2.3a)
+
+To become familiar with the ibmclose data set, here we plot the time series with some running averages. The big dip in price is going to give us trouble with our simplistic forcasting.
 
 ```{r}
-summary(cars)
+#' Produce some plots of the data in order to become familiar with it.
+plot(ibmclose, main="Closing Price of IBM Stock")
+lines(rollmean(ibmclose, k=30, fill=NA), col="red")
+lines(rollmean(ibmclose, k=60, fill=NA), col="blue")
+legend("topright", lty=1, col=c("red", "blue"), legend=c("30 day rolling average","60 day rolling average"))
 ```
 
-You can also embed plots, for example:
+## Question 2.3b)
 
-```{r, echo=FALSE}
-plot(cars)
+The ibmclose data is split into a 300-day training set and a 69-day test set:
+
+```{r}
+ibmclose.training <- window(ibmclose, start=1, end=300)
+ibmclose.test <- window(ibmclose, start=301)
 ```
 
+## Question 2.3c)
+
+Note that the blue prediction is for the mean predicition, and looks different due to using  plot() versus lines(). Also note that both naive methods overlap their predicitions. Visually inspecting the predictions, drift is clearly the most accurate; the mean is so far away as it does not account well for the bug dip in value around t=250.
+
+```{r}
+ibmclose.prediction_horizon <- length(ibmclose) - 300;
+
+# Calc mean, naive, seasonal naive, drift predictions
+ibmclose.fit.mean <- meanf(ibmclose.training, h=ibmclose.prediction_horizon)
+ibmclose.fit.naive <- naive(ibmclose.training, h=ibmclose.prediction_horizon)
+ibmclose.fit.seasonalNaive <- snaive(ibmclose.training, h=ibmclose.prediction_horizon)
+ibmclose.fit.drift <- rwf(ibmclose.training, drift=TRUE, h=ibmclose.prediction_horizon)
+
+# Plot data with predictions
+#plot(ibmclose.training, main="Closing Price of IBM Stock")
+plot(ibmclose.fit.mean, plot.conf=FALSE, main="Closing Price of IBM Stock")
+lines(ibmclose.fit.naive$mean, col=2)
+lines(ibmclose.fit.seasonalNaive$mean, col=3)
+lines(ibmclose.fit.drift$mean, col=1)
+lines(ibmclose)
+legend("bottomleft", lty=1, col=c(4,2,3,1), legend=c("Mean method","Naive method","Seasonal naive method", "Drift"))
+```
+
+The error rates are also printed for the various prediction methods: TODO
+
+```{r results='hold'}
+# Look at error values from our predictions
+accuracy(ibmclose.fit.mean, ibmclose)
+accuracy(ibmclose.fit.naive, ibmclose)
+accuracy(ibmclose.fit.seasonalNaive, ibmclose)
+accuracy(ibmclose.fit.drift, ibmclose)
+```
+
+\pagebreak
+
+# Question 2.4
+
+## Question 2.4a)
+
+Here a simple ts plot, with a few moving averages is plotted, as well as a month and season plot, since the data is the right format (versus previous question).
+
+```{r fig.show='hold'}
+# Plot time series with some moving averages
+plot(hsales, main="Sales of new one-family houses in the USA")
+lines(rollmean(hsales, k=30, fill=NA), col="red")
+lines(rollmean(hsales, k=60, fill=NA), col="blue")
+
+# Show seasonal plot, which should a general downward trend from March onwards
+seasonplot(hsales, col=1:20, pch=19, year.labels=TRUE, year.labels.left=TRUE)
+```
+
+Here are the sales by month, which emphasizes that there is a ramp up in sales from Jan to Mar, but declines for the rest of the year:
+
+```{r}
+monthplot(hsales,ylab="$ million",xlab="Month",xaxt="n", main="Sales of new one-family houses in the USA")
+axis(1,at=1:12,labels=month.abb,cex=0.8)
+```
+
+## Question 2.4b)
+
+Split the hsales data set into a training set and a test set, where the test set is the last two years of data.
+
+```{r}
+hsales.training <- window(hsales, start=c(1973, 1), end=c(1993, 12)) 
+hsales.test <- window(hsales, start=c(1994, 1), end=c(1995, 11)) 
+```
+
+## Question 2.4c)
+
+Visual inspection shows that the seasonal naive method looks pretty accurate across the 23months of prediction, though the predicted value in 23months looks pretty off. None of the methods seem to predict the end drop-off in value towards
+the end of 1995. TODO
+
+```{r fig.show='hold'}
+hsales.prediction_horizon <- 23;
+
+# Calculate the mean, naive, seasonal naive, drift predicitons
+hsales.fit.mean <- meanf(hsales.training, h=hsales.prediction_horizon)
+hsales.fit.naive <- naive(hsales.training, h=hsales.prediction_horizon)
+hsales.fit.seasonalNaive <- snaive(hsales.training, h=hsales.prediction_horizon)
+hsales.fit.drift <- rwf(hsales.training, drift=TRUE, h=hsales.prediction_horizon)
+
+# Plot the data with our predicitons
+#plot(hsales.training, main="Sales of new one-family houses in the USA w/ Forecasts")
+plot(hsales.fit.mean, plot.conf=FALSE, main="Sales of new one-family houses in the USA")
+lines(hsales.fit.naive$mean, col=2)
+lines(hsales.fit.seasonalNaive$mean, col=3)
+lines(hsales.fit.drift$mean, col=1)
+lines(hsales)
+legend("topright", lty=1, col=c(4,2,3,1), legend=c("Mean method","Naive method","Seasonal naive method", "Drift"))
+```
+
+Here we look at the error values (TODO):
+
+```{r results='hold'}
+# Look at error values from our predictions
+accuracy(hsales.fit.mean, hsales)
+accuracy(hsales.fit.naive, hsales)
+accuracy(hsales.fit.seasonalNaive, hsales)
+accuracy(hsales.fit.drift, hsales)
+```
+
+\pagebreak
+
+## Question 3.2a
+
+It seems that only three columns come close (but don't quite hit the threshold) to matching the rules of thumb for degenerate categorical data as described in the book. Those columns are mycelium, int.discolor, and sclerotia (see output):
+
+```{r}
+nrows <- nrow(Soybean);
+i <- 1;
+ratios <- c()
+for (column in colnames(Soybean)[2:length(colnames(Soybean))]) {
+  t <- count(Soybean, column)
+  sorted_t <- t[order(-t['freq']), 'freq']
+  
+  ratios[i] <- (sorted_t[1] / sorted_t[2]);
+  i <- i + 1;
+}
+
+ratios.dist <- data.frame(y=ratios, x=colnames(Soybean)[2:length(colnames(Soybean))])
+ratios.dist$x <-reorder(ratios.dist$x,-ratios.dist$y)
+ggplot(ratios.dist) + 
+  geom_bar(aes(x=x, y=y), stat="identity") + 
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
+  ggtitle("Distribution of the Ratios of Most Frequently Occuring \nto 2nd Most Frequently Occuring") + 
+  ylab("Ratio") + xlab("Column")
+```
+
+## Question 3.2b
+
+Looking at the histogram, it seems that quite a few predictors have signifcant number of NAs. There is a dropoff in NA level from around 12% to 5% (highest being almost 20% missing data). Also, the columns herbicide-injury, cyst-nematode, 2-4-d-injury, diaporthe-pod-&-stem-blight have no instances / rows that do not have a NA in them. The class phytophthora-rot has 68 NAs, but all other classes have complete cases:
+
+```{r}
+i <- 1;
+nas <- c()
+for (column in colnames(Soybean)[2:length(colnames(Soybean))]) {
+  t <- count(Soybean, column)
+  nas[i] <- ifelse(length(t[is.na(t[column]), 'freq']), t[is.na(t[column]), 'freq'] * 100 / nrows, 0)
+  i <- i + 1;
+}
+
+# Display histogram of distrubtion of NAs
+nas.dist <- data.frame(y=nas, x=colnames(Soybean)[2:length(colnames(Soybean))])
+nas.dist$x <-reorder(nas.dist$x,-nas.dist$y)
+ggplot(nas.dist) + 
+  geom_bar(aes(x=x, y=y), stat="identity") + 
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
+  ggtitle("Distribution of Missing Data") + 
+  ylab("% Rows w/ NAs") + xlab("Column")
+
+
+# The columns herbicide-injury, cyst-nematode, 2-4-d-injury, diaporthe-pod-&-stem-blight
+# have no instances / rows that do not have a NA in them
+# The Class phytophthora-rot has 68  NAs, but all other classes have none
+withnas <- count(Soybean$Class)
+withoutnas <- count(Soybean[complete.cases(Soybean), 'Class'])
+for (i in 1:nrow(withoutnas)) { 
+  classval <- withoutnas[i, 'x']
+  diff <- withnas[withnas$x == classval, 'freq'] - withoutnas[withoutnas$x == classval, 'freq']
+  if(diff > 0) {
+    print(paste("Class", classval, "has", diff, " NAs"))
+  }
+}
+```
+
+## Question 3.2c)
+
+We should start by investigating the nature of the missing data for predictors with a large number of missing values as well as why some classes have a high occurance of NAs. Our predictive model is going to be biased if we do not have good observations for 4 or 5 of the 19 outcome classes.
+ 
+For each predictor that has a high number of NAs (starting from the left in the question_3.2b histogram), we can determine if we can remove the predictor by checking if it has a high collinearity with any other predictor. If so, we can remove that preidctor and simply use the collinear predictor (presuming it has less instances of NAs). Imputing values would be difficult, since these are all categorical variables, and averaging those values would make no sense. We could impute a value using K-nearest neighbors, which would find the K rows that are closest to it by some definition of 'close', and then take a majority vote on what the categorical value should be.
+
+
+\pagebreak
+
+## Question 4.4a)
+
+TODO
+
+```{r results='hold'}
+#' (a) Use the sample function in base R to create a completely random sample
+#' of 60 oils. How closely do the frequencies of the random sample match
+#' the original samples? Repeat this procedure several times of understand
+#' the variation in the sampling process.
+print("Frequency from Data")
+print(freq(oilType, plot = FALSE))
+
+cat("\n")
+print("Frequency from Sampling 60 items")
+for (i in 1:5) {
+  print(freq(sample(oilType, 60), plot = FALSE))
+}
+```
+
+
+## Question 4.4b)
+
+The createDataPartition is indeed giving back different numbers every time but table() output shows how it is very consistent in how it distributes samples across class values, and is very close to the ideal from the data itself. Much better than the previous approach.
+
+```{r results='hold'}
+#' (b) Use the caret package function createDataPartition to create a stratified
+#' random sample. How does this compare to the completely random samples?
+#' the variation in the sampling process.
+print("Frequency from Data")
+print(freq(oilType, plot = FALSE))
+
+cat("\n")
+print("Frequency from Sampling 60 items")
+for (i in 1:5) {
+  print(freq(oilType[createDataPartition(oilType, p=60 / length(oilType), list=FALSE)], plot = FALSE))
+}
+```
+
+
+## Question 4.4c)
+
+When the number of samples is not large, a single test set should be avoided because we may need every sample during model building. We should use somekind of resampling technique, like k-fold cross-validation. The book recommends "If the samples size is small, we recommend repeated 10-fold cross-validation for several reasons: the bias and variance properties are good and, given the sample size, thecomputational costs are not large.
+
+
+## Question 4.4d)
+
+The code following this shows the commands I used to come to the following conclusions.
+
+By keeping the model performance steady, while changing the test sample size leads to a relationship where higher sample size means less uncertainity. This makes sense: we would expect us to be more certain if we have more samples to evaluate the model performance with.
+
+If you keep the sample size steady, and vary the model performance leads to a relationship where:
+  - the uncertainity maxes when performance is 50% (which makes sense since its binomial probability).
+  - the uncertainity is less when model performace is near either extreme (partially due to clipping of the CI by the boundry)
+
+```{r results='hide'}
+spread <- function(obj) { conf <- obj$conf.int; return(conf[2] - conf[1]);}
+spread(binom.test(16, 20)) # 0.37928
+spread(binom.test(32, 40)) # 0.2659556
+spread(binom.test(30, 40)) # 0.2850472
+spread(binom.test(10, 40)) # 0.2850472
+spread(binom.test(15, 40)) # 0.3147225
+spread(binom.test(20, 40)) # 0.3239644
+spread(binom.test(25, 40)) # 0.3147225
+spread(binom.test(40, 40)) # 0.0880973
+spread(binom.test(20, 40)) # 0.3239644
+spread(binom.test(21, 40)) # 0.3236002
+spread(binom.test(19, 40)) # 0.3236002
+spread(binom.test(19, 20)) # 0.2474677
+spread(binom.test(20, 20)) # 0.1684335
+spread(binom.test(10, 20)) # 0.4560843
+spread(binom.test(1, 20))  # 0.2474677
+```

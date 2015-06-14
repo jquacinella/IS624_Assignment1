@@ -39,6 +39,7 @@ question_2.3a <- function() {
   plot(ibmclose, main="Closing Price of IBM Stock")
   lines(rollmean(ibmclose, k=30, fill=NA), col="red")
   lines(rollmean(ibmclose, k=60, fill=NA), col="blue")
+  legend("topright", lty=1, col=c("red", "blue"), legend=c("30 day rolling average","60 day rolling average"))
 }
 
 #' Split the data into a training set of 300 observations and a test set of 69 observations.
@@ -241,7 +242,7 @@ question_3.2b <- function() {
 #' (c) Develop a strategy for handling missing data, either by eliminating
 #' predictors or imputation.
 #' 
-#' We should start by investigating the nature of the missing data for predictors with a large
+#' NOTES: We should start by investigating the nature of the missing data for predictors with a large
 #' number of missing values as well as why some classes have a high occurance of NAs. Our predictive
 #' model is going to be biased if we do not have good observations for 4 or 5 of the 19 outcome
 #' classes.
@@ -254,3 +255,90 @@ question_3.2b <- function() {
 #' those values would make no sense. We could impute a value using K-nearest neighbors, which
 #' would find the K rows that are closest to it by some definition of 'close', and then take
 #' a majority vote on what the categorical value should be.
+
+
+
+
+#' 4.4. snip 
+#' (a) Use the sample function in base R to create a completely random sample
+#' of 60 oils. How closely do the frequencies of the random sample match
+#' the original samples? Repeat this procedure several times of understand
+#' the variation in the sampling process.
+question_4.4a <- function() {
+  set.seed(1)
+  library(caret)
+  library(descr)
+  data(oil)
+  
+  print("Frequency from Data")
+  print(freq(oilType, plot = FALSE))
+  
+  cat("\n")
+  print("Frequency from Sampling 60 items")
+  for (i in 1:10) {
+    print(freq(sample(oilType, 60), plot = FALSE))
+  }
+}
+
+#' (b) Use the caret package function createDataPartition to create a stratified
+#' random sample. How does this compare to the completely random samples?
+#' the variation in the sampling process.
+#' 
+#' NOTES: the createDataPartition is indeed giving back different numbers every time
+#' but table() output shows how it is very consistent in how it distributes samples
+#' across class values, and is very close to the ideal from the data itself. Much
+#' better than the previous approach
+question_4.4b <- function() {
+  print("Frequency from Data")
+  print(freq(oilType, plot = FALSE))
+  
+  cat("\n")
+  print("Frequency from Sampling 60 items")
+  for (i in 1:10) {
+    print(freq(oilType[createDataPartition(oilType, p=60 / length(oilType), list=FALSE)], plot = FALSE))
+  }
+}
+
+
+
+#' (c) With such a small samples size, what are the options for determining
+#' performance of the model? Should a test set be used?
+#' 
+#' NOTES: When the number of samples is not large, a single test set should be avoided 
+#' because we may need every sample during model building. We should use some 
+#' kind of resampling technique, like k-fold cross-validation. The book recommends
+#' "If the samples size is small, we recommend repeated 10-fold cross-validation for several 
+#' reasons: the bias and variance properties are good and, given the sample size, the 
+#' computational costs are not large.
+
+
+#' (d) Snip...
+#' NOTES: In this case, the width of the 95 % confidence interval is 37.9 %. Try
+#' different samples sizes and accuracy rates to understand the trade-off
+#' between the uncertainty in the results, the model performance, and the
+#' test set size.
+#' 
+#' By keeping the model performance steady, while changing the test sample size leads to a relationship where higher sample size means less uncertainity. This makes sense: we would expect us to be more certain if we have more samples to evaluate the model performance with.
+#' 
+#' If you keep the sample size steady, and vary the model performance leads to a relationship where:
+#'   - the uncertainity maxes when performance is 50% (which makes sense since its binomial probability).
+#' - the uncertainity is less when model performace is near either extreme (partially due to clipping of the CI by the boundry)
+
+function question_4.4d <- function() {
+  spread <- function(obj) { conf <- obj$conf.int; return(conf[2] - conf[1]);}
+  spread(binom.test(16, 20)) # 0.37928
+  spread(binom.test(32, 40)) # 0.2659556
+  spread(binom.test(30, 40)) # 0.2850472
+  spread(binom.test(10, 40)) # 0.2850472
+  spread(binom.test(15, 40)) # 0.3147225
+  spread(binom.test(20, 40)) # 0.3239644
+  spread(binom.test(25, 40)) # 0.3147225
+  spread(binom.test(40, 40)) # 0.0880973
+  spread(binom.test(20, 40)) # 0.3239644
+  spread(binom.test(21, 40)) # 0.3236002
+  spread(binom.test(19, 40)) # 0.3236002
+  spread(binom.test(19, 20)) # 0.2474677
+  spread(binom.test(20, 20)) # 0.1684335
+  spread(binom.test(10, 20)) # 0.4560843
+  spread(binom.test(1, 20))  # 0.2474677
+}
